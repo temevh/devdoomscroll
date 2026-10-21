@@ -1,31 +1,10 @@
-# Version 1.0
+# Version 1.0 - devdoomscroll.dom
 
 ## User stories
 
-### US-001: Browse front page
-
-**As a** Normal user
-**I want** to seamlessly scroll the front page
-**So that** I can see posts that interest me
-**Priority:** Must
-
-### US-002: Add interest
-
-**As a** Normal user
-**I want** to add a topic that interests me
-**So that** I see posts that are related to the topic
-**Priority:** Must
-
-### US-003: Remove interest
-
-**As a** Normal user
-**I want** to remove a topic from the displayed topics
-**So that** I see posts that are related to the topic
-**Priority:** Must
-
-### US-004: Update page
-
-**As a** Normal (premium?) user
-**I want** to have the ability to refresh/update the page
-**So that** I see up-to-date posts
-**Priority:** Could
+| ID     | Title             | As a                   | I want                                         | So that                                   | Priority |
+| ------ | ----------------- | ---------------------- | ---------------------------------------------- | ----------------------------------------- | -------- |
+| US-001 | Browse front page | Normal user            | to seamlessly scroll the front page            | I can see posts that interest me          | Must     |
+| US-002 | Add interest      | Normal user            | to add a topic that interests me               | I see posts that are related to the topic | Must     |
+| US-003 | Remove interest   | Normal user            | to remove a topic from the displayed topics    | I see posts that are related to the topic | Must     |
+| US-004 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                    | Could    |
