@@ -1,6 +1,6 @@
-# Version 1.0 - devdoomscroll.dom
+## Version 1.0 - devdoomscroll.dom
 
-## User stories
+### User stories
 
 | ID     | Title             | As a                   | I want                                         | So that                                   | Priority |
 | ------ | ----------------- | ---------------------- | ---------------------------------------------- | ----------------------------------------- | -------- |
@@ -8,3 +8,26 @@
 | US-002 | Add interest      | Normal user            | to add a topic that interests me               | I see posts that are related to the topic | Must     |
 | US-003 | Remove interest   | Normal user            | to remove a topic from the displayed topics    | I see posts that are related to the topic | Must     |
 | US-004 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                    | Could    |
+
+### Sources for posts
+
+Free:
+
+- dev.to
+- Stack overflow
+- Lobsters
+- Github (show repos)
+- Hacker news
+- Bluesky
+- RSS feeds
+
+Limited:
+
+- news sources:
+  - https://github.com/public-apis/public-apis#news
+  - Newsapi.org
+  - NewsData.io
+  - The guardian API
+- Reddit
+- linkedin?
+-
