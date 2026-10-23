@@ -18,9 +18,9 @@
 
 **Non-functional**:
 
-- Data sources should be updated every hour and saved to backend database.
-- When after update posts for certain tag are fetched from db, add them to redis cache
-- Users interests are saved to cookies.
+- Posts should be updated every 3 hours and saved to database
+- When after update posts for certain topics are fetched from db, add them to redis cache
+- Users interests are saved to cookies
 
 **Constraints**:
 
@@ -55,3 +55,4 @@ Additional features:
 - User functionality, posts can be saved
 - Add comments to posts
 - Cross device interests (interests saved to database for user)
+- Metrics to track how active a source is (how often new posts are created). Can then be used to update a certain source more frequently
