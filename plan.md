@@ -4,14 +4,32 @@
 
 | ID     | Title             | As a                   | I want                                         | So that                                   | Priority |
 | ------ | ----------------- | ---------------------- | ---------------------------------------------- | ----------------------------------------- | -------- |
-| US-001 | Browse front page | Normal user            | to seamlessly scroll the front page            | I can see posts that interest me          | Must     |
-| US-002 | Add interest      | Normal user            | to add a topic that interests me               | I see posts that are related to the topic | Must     |
-| US-003 | Remove interest   | Normal user            | to remove a topic from the displayed topics    | I see posts that are related to the topic | Must     |
-| US-004 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                    | Could    |
+| US-101 | Browse front page | Normal user            | to seamlessly scroll the front page            | I can see posts that interest me          | Must     |
+| US-102 | Add interest      | Normal user            | to add a topic that interests me               | I see posts that are related to the topic | Must     |
+| US-103 | Remove interest   | Normal user            | to remove a topic from the displayed topics    | I see posts that are related to the topic | Must     |
+| US-104 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                    | Could    |
+
+### Requirements:
+
+**Functional**:
+
+- Requirements laid out in the version 1 (US-1xx) user stories
+- Viewable on mobile and on desktop
+
+**Non-functional**:
+
+- Data sources should be updated every hour and saved to backend database.
+- When after update posts for certain tag are fetched from db, add them to redis cache
+- Users interests are saved to cookies.
+
+**Constraints**:
+
+- Use free resources as much as possible
+- Adhere to site scraping rules and regulations
 
 ### Sources for posts
 
-Free:
+**Free**:
 
 - dev.to
 - Stack overflow
@@ -21,7 +39,7 @@ Free:
 - Bluesky
 - RSS feeds
 
-Limited:
+**Limited**:
 
 - news sources:
   - https://github.com/public-apis/public-apis#news
@@ -30,4 +48,10 @@ Limited:
   - The guardian API
 - Reddit
 - linkedin?
--
+
+Additional features:
+
+- Ability to set infinity scroll or paginated
+- User functionality, posts can be saved
+- Add comments to posts
+- Cross device interests (interests saved to database for user)
