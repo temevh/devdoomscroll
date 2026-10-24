@@ -2,12 +2,12 @@
 
 ### User stories
 
-| ID     | Title             | As a                   | I want                                         | So that                                   | Priority |
-| ------ | ----------------- | ---------------------- | ---------------------------------------------- | ----------------------------------------- | -------- |
-| US-101 | Browse front page | Normal user            | to seamlessly scroll the front page            | I can see posts that interest me          | Must     |
-| US-102 | Add interest      | Normal user            | to add a topic that interests me               | I see posts that are related to the topic | Must     |
-| US-103 | Remove interest   | Normal user            | to remove a topic from the displayed topics    | I see posts that are related to the topic | Must     |
-| US-104 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                    | Could    |
+| ID     | Title             | As a                   | I want                                         | So that                                 | Priority |
+| ------ | ----------------- | ---------------------- | ---------------------------------------------- | --------------------------------------- | -------- |
+| US-101 | Browse front page | Normal user            | to seamlessly scroll the front page            | I can see posts that interest me        | Must     |
+| US-102 | Add interest      | Normal user            | to add a tag that interests me                 | I see posts that are related to the tag | Must     |
+| US-103 | Remove interest   | Normal user            | to remove a tag from the displayed tags        | I see posts that are related to the tag | Must     |
+| US-104 | Update page       | Normal (premium?) user | to have the ability to refresh/update the page | I see up-to-date posts                  | Could    |
 
 ### Requirements:
 
@@ -19,7 +19,7 @@
 **Non-functional**:
 
 - Posts should be updated every 3 hours and saved to database
-- When after update posts for certain topics are fetched from db, add them to redis cache
+- When after update posts for certain tags are fetched from db, add them to redis cache
 - Users interests are saved to cookies
 
 **Constraints**:

@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: Doom.dev OpenAPI specs
+  description: API specs for the version 1.0 of doomdev
+  contact: { email: temehama@gmail.com }
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: posts
+    description: Operations related to posts
+
+paths:
+  /posts:
+    get:
+      tags:
+        - posts
+      operationId: listPosts
+      security: []
+      summary: List Posts
+      description: Retrieve posts matching the selected tags, amount based on set limit
+      parameters:
+        - in: query
+          name: tags
+          required: false
+          description: >
+            Tags to filter by, comma-separated (e.g. python,ai).
+            Returns posts that have at least one of the given tags.
+            If omitted, posts from all tags are returned.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - in: query
+          name: limit
+          required: false
+          description: Limit the number of posts shown
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: cursor
+          required: false
+          description: >
+            Opaque cursor from a previous response's nextCursor.
+            Omit to get the first page. Must be used with the same tags as the
+            request that produced it.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Posts matching the given tags, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, nextCursor]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+                  nextCursor:
+                    type: [string, "null"]
+                    description: Cursor for the next set of posts, or null when there are no more posts
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  schemas:
+    Post:
+      type: object
+      required: [id, title, preview, url, publishedAt, image, tags, source]
+      properties:
+        id:
+          type: string
+          format: uuid
+          examples: ["550e8400-e29b-41d4-a716-446655440000"]
+        title:
+          type: string
+          examples: ["How to code 101"]
+        preview:
+          type: [string, "null"]
+          maxLength: 200
+          description: >
+            Plain-text excerpt from the start of the post, at most 200 characters.
+            Null when the source provides no text.
+          examples: ["Learn to code lorem ipsum…"]
+        url:
+          type: string
+          format: uri
+          examples: ["https://reddit.com/r/howtocode"]
+        publishedAt:
+          type: string
+          format: date-time
+          examples: ["2017-07-21T17:32:28Z"]
+        image:
+          type: [string, "null"]
+          format: uri
+          examples:
+            [
+              "https://i1.sndcdn.com/artworks-x8zI2HVC2pnkK7F5-4xKLyA-t500x500.jpg",
+            ]
+        tags:
+          type: array
+          items: { type: string }
+          examples: [["python", "ai"]]
+        source:
+          $ref: "#/components/schemas/Source"
+    Source:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          description: Stable identifier of the source
+          examples: ["devto"]
+        name:
+          type: string
+          description: Display name of the source
+          examples: ["DEV Community"]
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Identifies the kind of problem
+          examples: ["https://doom.dev/problems/invalid-parameter"]
+        title:
+          type: string
+          description: Summary of problem type
+          examples: ["Invalid query parameter"]
+        status:
+          type: integer
+          examples: [400]
+        detail:
+          type: string
+          description: More in-depth explanation of problem
+          examples: ["limit must be between 1 and 100"]
+        instance:
+          type: string
+          format: uri-reference
+          examples: ["/posts?limit=500"]
+
+  responses:
+    BadRequest:
+      description: The request was invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
