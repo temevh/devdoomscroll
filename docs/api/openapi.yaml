@@ -12,6 +12,8 @@ servers:
 tags:
   - name: posts
     description: Operations related to posts
+  - name: tags
+    description: Operations related to tags
 
 paths:
   /posts:
@@ -70,6 +72,30 @@ paths:
                   nextCursor:
                     type: [string, "null"]
                     description: Cursor for the next set of posts, or null when there are no more posts
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /tags:
+    get:
+      tags:
+        - tags
+      operationId: listTags
+      summary: Get all selectable tags
+      description: Return an array of the currently selectable tags
+      responses:
+        "200":
+          description: Tags are returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      examples: ["ai", "python", "cloud"]
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
