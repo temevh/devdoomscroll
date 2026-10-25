@@ -1,0 +1,68 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table posts {
+  id uuid [primary key]
+  source_id varchar [not null]
+  external_id varchar [not null]
+  title varchar [not null]
+  preview varchar(200)
+  url text [not null]
+  image text 
+  published_at timestampz [not null]
+  ingested_at timestampz [not null]
+  
+  indexes {
+    (source_id, external_id) [unique]
+    (ingested_at, id)
+  }
+}
+
+Table tags {
+  id uuid [primary key]
+  name varchar [not null, unique]
+}
+
+Table sources {
+  id varchar [primary key]
+  name varchar [not null]
+  scrape_interval_minutes integer [not null, default: 180]
+  enabled boolean [not null, default: true]
+}
+
+Table scrape_runs {
+  id uuid [primary key]
+  source_id varchar [not null]
+  started_at timestampz [not null]
+  finished_at timestapz [not null]
+  status status_enum [not null]
+  items_fetched integer
+  items_new integer
+  error text
+
+  indexes {
+    (source_id, started_at)
+  }
+}
+
+
+Table post_tags {
+  post_id uuid [not null]
+  tag_id uuid [not null]
+
+  indexes {
+    (post_id, tag_id) [pk]
+    (tag_id, post_id)
+  }
+}
+
+Ref: posts.source_id > sources.id
+Ref: post_tags.post_id > posts.id [delete: cascade]
+Ref: post_tags.tag_id > tags.id [delete: cascade]
+Ref: scrape_runs.source_id > sources.id
+
+enum status_enum {
+  succeed
+  running
+  failed
+}

@@ -11,3 +11,5 @@ If a source is down/unaccessible/has format changes it is simply skipped.
 If the scraper finds the same url for two different tags, combine the tags under a single database entry.
 
 ![High-level architecture](basic_arch.drawio.svg)
+
+![Database version 1](db_v1.png)
