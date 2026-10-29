@@ -7,12 +7,11 @@ import { getJson } from "../utils/getJson.ts";
 import { normalizeTags } from "../tags.ts";
 
 const PER_PAGE = 100;
-// Upper bound for one run, so a first run or a long outage can't page forever.
 const MAX_PAGES = 5;
 const MAX_ATTEMPTS = 5;
+
 const HEADERS = {
   accept: "application/vnd.forem.api-v1+json",
-  // DEV.to rejects requests without a User-Agent.
   "user-agent":
     "devdoomscroll-worker (+https://github.com/temevh/devdoomscroll)",
 };
@@ -45,11 +44,8 @@ export async function fetchNewPosts(since: Date | null): Promise<Post[]> {
 
     for (const a of articles) {
       const publishedAt = new Date(a.published_at);
-      // >= keeps posts sharing the cursor's timestamp; the unique key drops the one we have.
       if (since && publishedAt < since) return posts;
-      // Only English posts. Checked after the cursor so paging still stops on time.
       if (a.language !== "en") continue;
-      // Posts with no known tag would never show up in a tag-based feed.
       const tags = normalizeTags(a.tag_list);
       if (tags.length === 0) continue;
       posts.push({
@@ -72,7 +68,6 @@ export async function fetchNewPosts(since: Date | null): Promise<Post[]> {
   return posts;
 }
 
-/** Plain text for posts.preview (varchar(200)). */
 function toPreview(html: string): string | null {
   const text = convert(html, { wordwrap: false }).replace(/\s+/g, " ").trim();
   if (!text) return null;

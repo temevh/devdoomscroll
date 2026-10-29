@@ -104,10 +104,6 @@ export async function finishRun(
     .execute();
 }
 
-/**
- * Inserts posts in one transaction and returns how many were new. Existing
- * posts are left as they are, but tags they didn't have yet are added.
- */
 export async function savePosts(db: Db, posts: Post[]): Promise<number> {
   if (posts.length === 0) return 0;
 
