@@ -4,7 +4,6 @@ import type { Post } from "../types.ts";
 
 export const SOURCE_ID = "devto";
 
-// Mirrors supabase/migrations (the source of truth); only the tables the worker touches.
 interface Database {
   sources: { id: string; scrape_interval_minutes: number; enabled: boolean };
   scrape_runs: {

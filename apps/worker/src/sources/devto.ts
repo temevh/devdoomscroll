@@ -4,6 +4,7 @@ import { z } from "zod";
 import { log } from "../logger.ts";
 import type { Post } from "../../types.ts";
 import { getJson } from "../utils/getJson.ts";
+import { normalizeTags } from "../tags.ts";
 
 const PER_PAGE = 100;
 // Upper bound for one run, so a first run or a long outage can't page forever.
@@ -48,6 +49,9 @@ export async function fetchNewPosts(since: Date | null): Promise<Post[]> {
       if (since && publishedAt < since) return posts;
       // Only English posts. Checked after the cursor so paging still stops on time.
       if (a.language !== "en") continue;
+      // Posts with no known tag would never show up in a tag-based feed.
+      const tags = normalizeTags(a.tag_list);
+      if (tags.length === 0) continue;
       posts.push({
         externalId: String(a.id),
         title: a.title.trim(),
@@ -55,11 +59,7 @@ export async function fetchNewPosts(since: Date | null): Promise<Post[]> {
         url: a.url,
         image: a.cover_image || a.social_image || null,
         publishedAt,
-        tags: [
-          ...new Set(
-            a.tag_list.map((t) => t.trim().toLowerCase()).filter(Boolean),
-          ),
-        ],
+        tags,
       });
     }
 
