@@ -1,13 +1,18 @@
 {
   "name": "doom.dev",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "description": "",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "worker:dev": "npm run dev -w @doom/worker",
+    "worker:start": "npm run start -w @doom/worker"
   },
   "repository": {
     "type": "git",
@@ -22,6 +27,11 @@
   },
   "homepage": "https://github.com/temevh/devdoomscroll#readme",
   "devDependencies": {
-    "supabase": "^2.122.0"
+    "supabase": "^2.122.0",
+    "@types/node": "^22.19.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "fastify": "^5.12.7"
   }
 }

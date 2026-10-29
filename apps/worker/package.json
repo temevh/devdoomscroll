@@ -1,0 +1,26 @@
+{
+  "name": "@doom/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/main.ts",
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "scrape:once": "node --env-file-if-exists=.env src/main.ts --once",
+    "scrape:all": "node --env-file-if-exists=.env src/main.ts --once --force",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "html-to-text": "^10.0.1",
+    "kysely": "^0.29.7",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
+    "@types/pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
