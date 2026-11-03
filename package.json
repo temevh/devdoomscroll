@@ -11,8 +11,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "worker:dev": "npm run dev -w @doom/worker",
-    "worker:start": "npm run start -w @doom/worker"
+    "scraper:dev": "npm run dev -w @doom/worker",
+    "scraper:start": "npm run start -w @doom/worker"
   },
   "repository": {
     "type": "git",
