@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+/* Design tokens taken from UI_sketch.pdf. Tailwind v4 turns each of these into
+   utilities, e.g. bg-canvas, text-ink, text-muted, bg-accent, border-line, font-mono. */
+@theme {
+  --color-canvas: #0f110e;
+  --color-dot: #20221f;
+  --color-line: #2b2d2a;
+  --color-ink: #eceee8;
+  --color-muted: #a7aaa2;
+  --color-accent: #c8f069;
+
+  --font-sans: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  /* Page background: near-black canvas with a faint 22px dot grid. */
+  body {
+    @apply min-h-dvh bg-canvas font-sans text-ink antialiased;
+    background-image: radial-gradient(circle, var(--color-dot) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    background-position: 11px 11px;
+  }
+}

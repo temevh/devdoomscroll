@@ -40,6 +40,11 @@ server.get("/posts", async () => {
     .execute();
 });
 
+server.get("/tags", async () => {
+  const rows = await db.selectFrom("tags").select("name").orderBy("name").execute();
+  return rows.map((r) => r.name);
+});
+
 server.listen({ port: 8080 }, (err) => {
   if (err) {
     console.error(err);
