@@ -6,13 +6,12 @@
     "apps/*"
   ],
   "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "scraper:dev": "npm run dev -w @doom/worker",
-    "scraper:start": "npm run start -w @doom/worker"
+    "scraper:start": "npm run start -w @doom/worker",
+    "server:dev": "npm run dev -w @doom/server",
+    "server:start": "npm run start -w @doom/server",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "repository": {
     "type": "git",
@@ -21,17 +20,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/temevh/devdoomscroll/issues"
   },
   "homepage": "https://github.com/temevh/devdoomscroll#readme",
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "supabase": "^2.122.0",
-    "@types/node": "^22.19.0",
     "typescript": "^7.0.2"
-  },
-  "dependencies": {
-    "fastify": "^5.12.7"
   }
 }
