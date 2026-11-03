@@ -18,7 +18,9 @@
   },
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",
-    "@types/pg": "^8.23.1"
+    "@types/pg": "^8.23.1",
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=22.18"

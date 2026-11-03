@@ -2,16 +2,16 @@
   "name": "doom.dev",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
   "description": "",
   "scripts": {
-    "scraper:dev": "npm run dev -w @doom/worker",
-    "scraper:start": "npm run start -w @doom/worker",
-    "server:dev": "npm run dev -w @doom/server",
-    "server:start": "npm run start -w @doom/server",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "install:all": "npm install && npm install --prefix apps/scraper && npm install --prefix apps/server && npm install --prefix apps/web",
+    "scraper:dev": "npm run dev --prefix apps/scraper",
+    "scraper:start": "npm run start --prefix apps/scraper",
+    "scrape:all": "npm run scrape:all --prefix apps/scraper",
+    "server:dev": "npm run dev --prefix apps/server",
+    "server:start": "npm run start --prefix apps/server",
+    "web:dev": "npm run dev --prefix apps/web",
+    "web:build": "npm run build --prefix apps/web"
   },
   "repository": {
     "type": "git",
@@ -25,8 +25,6 @@
   },
   "homepage": "https://github.com/temevh/devdoomscroll#readme",
   "devDependencies": {
-    "@types/node": "^22.20.5",
-    "supabase": "^2.122.0",
-    "typescript": "^7.0.2"
+    "supabase": "^2.122.0"
   }
 }
