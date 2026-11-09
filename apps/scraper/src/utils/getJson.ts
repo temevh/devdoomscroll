@@ -18,7 +18,7 @@ export async function getJson(
       !(res instanceof Response) || res.status === 429 || res.status >= 500;
     const error =
       res instanceof Response
-        ? new Error(`DEV.to returned ${res.status} for ${url}`)
+        ? new Error(`${new URL(url).host} returned ${res.status} for ${url}`)
         : res;
     if (!retryable || attempt === MAX_ATTEMPTS) throw error;
 
@@ -27,7 +27,7 @@ export async function getJson(
         ? Number(res.headers.get("retry-after")) * 1_000 || 0
         : 0;
     const delayMs = Math.max(2 ** attempt * 1_000, retryAfterMs);
-    log.warn("devto: retrying", {
+    log.warn("http: retrying", {
       url,
       attempt,
       delayMs,

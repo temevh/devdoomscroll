@@ -30,7 +30,7 @@ const articlesSchema = z.array(
   }),
 );
 
-export async function fetchNewPosts(since: Date | null): Promise<Post[]> {
+export async function fetchDevto(since: Date | null): Promise<Post[]> {
   const posts: Post[] = [];
 
   for (let page = 1; page <= MAX_PAGES; page++) {

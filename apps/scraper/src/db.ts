@@ -2,8 +2,6 @@ import { Kysely, PostgresDialect, sql, type Generated } from "kysely";
 import pg from "pg";
 import type { Post } from "../types.ts";
 
-export const SOURCE_ID = "devto";
-
 interface Database {
   sources: { id: string; scrape_interval_minutes: number; enabled: boolean };
   scrape_runs: {
@@ -44,7 +42,7 @@ export const createDb = (connectionString: string): Db =>
  * scrape_interval_minutes ago (or it never ran). The schedule lives in the
  * database, so restarts don't lose it.
  */
-export async function isDue(db: Db): Promise<boolean> {
+export async function isDue(db: Db, sourceId: string): Promise<boolean> {
   const row = await db
     .selectFrom("sources as s")
     .leftJoin("scrape_runs as r", "r.source_id", "s.id")
@@ -52,7 +50,7 @@ export async function isDue(db: Db): Promise<boolean> {
       "s.scrape_interval_minutes",
       (eb) => eb.fn.max("r.started_at").as("last"),
     ])
-    .where("s.id", "=", SOURCE_ID)
+    .where("s.id", "=", sourceId)
     .where("s.enabled", "=", true)
     .groupBy("s.id")
     .executeTakeFirst();
@@ -63,19 +61,22 @@ export async function isDue(db: Db): Promise<boolean> {
   );
 }
 
-export async function latestPublishedAt(db: Db): Promise<Date | null> {
+export async function latestPublishedAt(
+  db: Db,
+  sourceId: string,
+): Promise<Date | null> {
   const row = await db
     .selectFrom("posts")
     .select((eb) => eb.fn.max("published_at").as("latest"))
-    .where("source_id", "=", SOURCE_ID)
+    .where("source_id", "=", sourceId)
     .executeTakeFirst();
   return row?.latest ?? null;
 }
 
-export async function startRun(db: Db): Promise<string> {
+export async function startRun(db: Db, sourceId: string): Promise<string> {
   const row = await db
     .insertInto("scrape_runs")
-    .values({ source_id: SOURCE_ID, status: "running" })
+    .values({ source_id: sourceId, status: "running" })
     .returning("id")
     .executeTakeFirstOrThrow();
   return row.id;
@@ -104,7 +105,11 @@ export async function finishRun(
     .execute();
 }
 
-export async function savePosts(db: Db, posts: Post[]): Promise<number> {
+export async function savePosts(
+  db: Db,
+  sourceId: string,
+  posts: Post[],
+): Promise<number> {
   if (posts.length === 0) return 0;
 
   return db.transaction().execute(async (trx) => {
@@ -112,7 +117,7 @@ export async function savePosts(db: Db, posts: Post[]): Promise<number> {
       .insertInto("posts")
       .values(
         posts.map((p) => ({
-          source_id: SOURCE_ID,
+          source_id: sourceId,
           external_id: p.externalId,
           title: p.title,
           preview: p.preview,
@@ -138,7 +143,7 @@ export async function savePosts(db: Db, posts: Post[]): Promise<number> {
       trx
         .selectFrom("posts")
         .select(["id", "external_id"])
-        .where("source_id", "=", SOURCE_ID)
+        .where("source_id", "=", sourceId)
         .where(
           "external_id",
           "in",
