@@ -1,7 +1,7 @@
 import { type Generated } from "kysely";
 
 export interface Database {
-  sources: { id: string; scrape_interval_minutes: number; enabled: boolean };
+  sources: { id: string; name: string; scrape_interval_minutes: number; enabled: boolean };
   scrape_runs: {
     id: Generated<string>;
     source_id: string;

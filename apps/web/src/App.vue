@@ -1,12 +1,33 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import FeedHeader from './components/FeedHeader.vue'
 import TagsBar from './components/TagsBar.vue'
-import { api } from './api/index.ts'
+import { api, type Post } from './api/index.ts'
 import { useFollowedTags } from './composables/useFollowedTags.ts'
 
 const tags = ref<string[]>([])
-const { followed, hasChanges, save } = useFollowedTags()
+const posts = ref<Post[]>([])
+const nextCursor = ref<string | null>(null)
+const { followed, saved, hasChanges, save } = useFollowedTags()
+
+let controller: AbortController | null = null
+
+async function loadPosts() {
+  controller?.abort()
+  controller = new AbortController()
+  const { signal } = controller
+  try {
+    const page = await api.posts.list(
+      { tags: saved.value.length ? saved.value : undefined },
+      { signal },
+    )
+    posts.value = page.items
+    nextCursor.value = page.nextCursor
+  } catch (err) {
+    if (signal.aborted) return
+    console.error('Failed to load posts', err)
+  }
+}
 
 onMounted(async () => {
   try {
@@ -14,6 +35,11 @@ onMounted(async () => {
   } catch (err) {
     console.error('Failed to load tags', err)
   }
+})
+
+watch(saved, loadPosts, { immediate: true })
+watch(posts, (value) => {
+  console.log(value)
 })
 </script>
 

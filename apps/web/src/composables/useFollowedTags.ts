@@ -31,5 +31,5 @@ export function useFollowedTags() {
     }
   }
 
-  return { followed, hasChanges, save }
+  return { followed, saved, hasChanges, save }
 }
