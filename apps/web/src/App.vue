@@ -45,9 +45,6 @@ onMounted(async () => {
 })
 
 watch(saved, loadPosts, { immediate: true })
-watch(posts, (value) => {
-  console.log(posts.value)
-})
 </script>
 
 <template>
