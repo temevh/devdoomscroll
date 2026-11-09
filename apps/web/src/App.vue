@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import FeedHeader from './components/FeedHeader.vue'
 import TagsBar from './components/TagsBar.vue'
+import PostGrid from './components/post/PostGrid.vue'
 import { api, type Post } from './api/index.ts'
 import { useFollowedTags } from './composables/useFollowedTags.ts'
 
@@ -9,6 +10,12 @@ const tags = ref<string[]>([])
 const posts = ref<Post[]>([])
 const nextCursor = ref<string | null>(null)
 const { followed, saved, hasChanges, save } = useFollowedTags()
+const sourceCount = computed(() => new Set(posts.value.map((p) => p.source.id)).size)
+
+function follow(tag: string) {
+  const name = tag.toLowerCase()
+  if (!followed.value.includes(name)) followed.value = [...followed.value, name]
+}
 
 let controller: AbortController | null = null
 
@@ -39,13 +46,14 @@ onMounted(async () => {
 
 watch(saved, loadPosts, { immediate: true })
 watch(posts, (value) => {
-  console.log(value)
+  console.log(posts.value)
 })
 </script>
 
 <template>
   <div class="mx-auto max-w-346 px-4 sm:px-8">
-    <FeedHeader :posts="17" :sources="6" :interests="followed.length" />
+    <FeedHeader :posts="posts.length" :sources="sourceCount" :interests="followed.length" />
     <TagsBar v-model:followed="followed" :tags="tags" :has-changes="hasChanges" @save="save" />
+    <PostGrid :posts="posts" :followed="followed" @follow="follow" />
   </div>
 </template>
