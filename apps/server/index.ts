@@ -5,6 +5,8 @@ import pg from "pg";
 import { type Database } from "./types.ts";
 
 const server = fastify();
+const port = Number(process.env.PORT ?? 8080);
+fastify({ logger: true });
 
 const env = z
   .object({
@@ -36,7 +38,10 @@ const listPostsQuery = z.object({
     .string()
     .optional()
     .transform((v) =>
-      (v ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+      (v ?? "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
     ),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   cursor: z.string().optional(),
@@ -54,27 +59,29 @@ const decodeCursor = (cursor: string) => {
 };
 
 const badRequest = (reply: FastifyReply, instance: string, detail: string) =>
-  reply
-    .code(400)
-    .type("application/problem+json")
-    .send({
-      type: "https://doom.dev/problems/invalid-parameter",
-      title: "Invalid query parameter",
-      status: 400,
-      detail,
-      instance,
-    });
+  reply.code(400).type("application/problem+json").send({
+    type: "https://doom.dev/problems/invalid-parameter",
+    title: "Invalid query parameter",
+    status: 400,
+    detail,
+    instance,
+  });
 
 server.get("/posts", async (request, reply) => {
   const parsed = listPostsQuery.safeParse(request.query);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return badRequest(reply, request.url, `${issue?.path.join(".")}: ${issue?.message}`);
+    return badRequest(
+      reply,
+      request.url,
+      `${issue?.path.join(".")}: ${issue?.message}`,
+    );
   }
   const { tags, limit, cursor } = parsed.data;
 
   const after = cursor ? decodeCursor(cursor) : undefined;
-  if (after === null) return badRequest(reply, request.url, "cursor is invalid");
+  if (after === null)
+    return badRequest(reply, request.url, "cursor is invalid");
 
   let query = db
     .selectFrom("posts as p")
@@ -131,16 +138,23 @@ server.get("/posts", async (request, reply) => {
       tags: r.tags,
       source: { id: r.source_id, name: r.source_name },
     })),
-    nextCursor: rows.length > limit && last ? encodeCursor(last.published_at, last.id) : null,
+    nextCursor:
+      rows.length > limit && last
+        ? encodeCursor(last.published_at, last.id)
+        : null,
   };
 });
 
 server.get("/tags", async () => {
-  const rows = await db.selectFrom("tags").select("name").orderBy("name").execute();
+  const rows = await db
+    .selectFrom("tags")
+    .select("name")
+    .orderBy("name")
+    .execute();
   return rows.map((r) => r.name);
 });
 
-server.listen({ port: 8080 }, (err) => {
+server.listen({ port, host: "0.0.0.0" }, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);
