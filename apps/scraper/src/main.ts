@@ -7,7 +7,8 @@ import {
   savePosts,
   startRun,
 } from "./db.ts";
-import { fetchNewPosts } from "./sources/devto.ts";
+import { fetchDevto, fetchStackoverflow } from "./sources/index.ts";
+import type { Post } from "../types.ts";
 import { describeError, log } from "./logger.ts";
 
 const env = z
@@ -27,19 +28,33 @@ const once = process.argv.includes("--once");
 const force = process.argv.includes("--force");
 const db = createDb(env.DATABASE_URL);
 
-/** Scrapes DEV.to if it is due. Each attempt is one scrape_runs row. */
-async function tick() {
-  if (!force && !(await isDue(db))) return;
+const SOURCES: Record<string, (since: Date | null) => Promise<Post[]>> = {
+  devto: fetchDevto,
+  stackoverflow: fetchStackoverflow,
+};
 
-  const runId = await startRun(db);
+async function tick() {
+  for (const [sourceId, fetchPosts] of Object.entries(SOURCES)) {
+    if (stopping) return;
+    if (!force && !(await isDue(db, sourceId))) continue;
+    await scrape(sourceId, fetchPosts);
+  }
+}
+
+async function scrape(
+  sourceId: string,
+  fetchPosts: (since: Date | null) => Promise<Post[]>,
+) {
+  const runId = await startRun(db, sourceId);
   const startedAt = Date.now();
   let itemsFetched: number | undefined;
   try {
-    const posts = await fetchNewPosts(await latestPublishedAt(db));
+    const posts = await fetchPosts(await latestPublishedAt(db, sourceId));
     itemsFetched = posts.length;
-    const itemsNew = await savePosts(db, posts);
+    const itemsNew = await savePosts(db, sourceId, posts);
     await finishRun(db, runId, { status: "succeed", itemsFetched, itemsNew });
     log.info("scrape succeeded", {
+      source: sourceId,
       itemsFetched,
       itemsNew,
       ms: Date.now() - startedAt,
@@ -47,7 +62,11 @@ async function tick() {
   } catch (err) {
     const error = describeError(err);
     await finishRun(db, runId, { status: "failed", itemsFetched, error });
-    log.error("scrape failed", { error, ms: Date.now() - startedAt });
+    log.error("scrape failed", {
+      source: sourceId,
+      error,
+      ms: Date.now() - startedAt,
+    });
     if (once) process.exitCode = 1;
   }
 }
