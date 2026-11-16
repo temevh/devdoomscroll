@@ -11,7 +11,8 @@
     "server:dev": "npm run dev --prefix apps/server",
     "server:start": "npm run start --prefix apps/server",
     "web:dev": "npm run dev --prefix apps/web",
-    "web:build": "npm run build --prefix apps/web"
+    "web:build": "npm run build --prefix apps/web",
+    "test": "npm test --prefix apps/scraper && npm run test:unit --prefix apps/web -- run"
   },
   "repository": {
     "type": "git",
