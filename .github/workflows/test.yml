@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+
+# A newer push to the same branch makes the run for the older commit pointless.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scraper:
+    name: Scraper (typecheck + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/scraper
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/scraper/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  web:
+    name: Web (typecheck + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm run test:unit -- run
+
+  server:
+    name: Server (typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
