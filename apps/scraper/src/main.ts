@@ -7,7 +7,11 @@ import {
   savePosts,
   startRun,
 } from "./db.ts";
-import { fetchDevto, fetchStackoverflow } from "./sources/index.ts";
+import {
+  fetchDevto,
+  fetchHackernews,
+  fetchStackoverflow,
+} from "./sources/index.ts";
 import type { Post } from "../types.ts";
 import { describeError, log } from "./logger.ts";
 
@@ -31,6 +35,7 @@ const db = createDb(env.DATABASE_URL);
 const SOURCES: Record<string, (since: Date | null) => Promise<Post[]>> = {
   devto: fetchDevto,
   stackoverflow: fetchStackoverflow,
+  hackernews: fetchHackernews, // ignores `since`, see the adapter
 };
 
 async function tick() {

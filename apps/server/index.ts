@@ -159,5 +159,5 @@ server.listen({ port, host: "0.0.0.0" }, (err) => {
     console.error(err);
     process.exit(1);
   }
-  console.log(`Server listening at http://localhost:8080`);
+  console.log(`Server listening at http://localhost:${port}`);
 });

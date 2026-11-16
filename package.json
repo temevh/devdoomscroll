@@ -4,7 +4,8 @@
   "private": true,
   "description": "",
   "scripts": {
-    "install:all": "npm install && npm install --prefix apps/scraper && npm install --prefix apps/server && npm install --prefix apps/web",
+    "dev": "node scripts/dev.mjs",
+    "install:all":"npm install && npm install --prefix apps/scraper && npm install --prefix apps/server && npm install --prefix apps/web",
     "scraper:dev": "npm run dev --prefix apps/scraper",
     "scraper:start": "npm run start --prefix apps/scraper",
     "scrape:all": "npm run scrape:all --prefix apps/scraper",

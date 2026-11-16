@@ -9,6 +9,7 @@
     "scrape:once": "node --env-file-if-exists=.env src/main.ts --once",
     "scrape:all": "node --env-file-if-exists=.env src/main.ts --once --force",
     "test": "node --test \"src/**/*.test.ts\"",
+    "test:utils": "node --test src/utils.test.ts",
     "typecheck": "tsc -p ."
   },
   "dependencies": {

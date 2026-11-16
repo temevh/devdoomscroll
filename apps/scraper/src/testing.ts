@@ -80,3 +80,20 @@ export async function driveTimers<T>(promise: Promise<T>, stepMs = 1_000): Promi
   }
   return result;
 }
+
+/**
+ * Median wall-clock time of `fn` in milliseconds over `runs` timed runs, after one
+ * untimed warm-up call so V8 has optimised it. The median means a single noisy run
+ * (GC pause, busy CI machine) can't fail a timing test on its own.
+ */
+export function medianMs(fn: () => void, runs = 5): number {
+  fn();
+  const times: number[] = [];
+  for (let i = 0; i < runs; i++) {
+    const start = performance.now();
+    fn();
+    times.push(performance.now() - start);
+  }
+  times.sort((a, b) => a - b);
+  return times[Math.floor(times.length / 2)] ?? 0;
+}

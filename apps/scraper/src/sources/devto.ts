@@ -1,9 +1,9 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import { convert } from "html-to-text";
 import { z } from "zod";
 import { log } from "../logger.ts";
 import type { Post } from "../../types.ts";
 import { getJson } from "../utils/getJson.ts";
+import { toPreview } from "../utils/text.ts";
 import { normalizeTags } from "../tags.ts";
 
 const PER_PAGE = 100;
@@ -66,10 +66,4 @@ export async function fetchDevto(since: Date | null): Promise<Post[]> {
   }
 
   return posts;
-}
-
-function toPreview(html: string): string | null {
-  const text = convert(html, { wordwrap: false }).replace(/\s+/g, " ").trim();
-  if (!text) return null;
-  return text.length > 200 ? `${text.slice(0, 199).trimEnd()}…` : text;
 }
