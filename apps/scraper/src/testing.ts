@@ -24,8 +24,33 @@ export function mockFetch(...replies: Reply[]) {
       return next;
     },
   );
+  return recorded(fetchMock);
+}
+
+/**
+ * Replaces global fetch with a function that answers by URL, so a test does not depend on
+ * the order requests are made in (needed when requests run concurrently). The handler may
+ * be async, which lets a test hold requests in flight; return an Error to fail one like a
+ * network error.
+ */
+export function mockFetchBy(handler: (url: URL) => Reply | Promise<Reply>) {
+  const fetchMock = mock.method(
+    globalThis,
+    "fetch",
+    async (input: string | URL | Request, _init?: RequestInit) => {
+      const reply = await handler(new URL(String(input)));
+      if (reply instanceof Error) throw reply;
+      return reply;
+    },
+  );
+  return recorded(fetchMock);
+}
+
+function recorded(fetchMock: {
+  mock: { calls: Array<{ arguments: [string | URL | Request, RequestInit?] }> };
+}) {
   return {
-    /** Every request made so far, in order. */
+    /** Every request made so far, in the order fetch was called. */
     get requests() {
       return fetchMock.mock.calls.map((c) => ({
         url: new URL(String(c.arguments[0])),

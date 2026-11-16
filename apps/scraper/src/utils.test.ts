@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import { describeError } from "./logger.ts";
 import { inferTags, normalizeTags } from "./tags.ts";
 import { medianMs } from "./testing.ts";
+import { mapSettled } from "./utils/concurrency.ts";
 import { toPreview, toText } from "./utils/text.ts";
 
 describe("normalizeTags", () => {
@@ -153,6 +154,66 @@ describe("describeError", () => {
     assert.equal(
       describeError(err),
       "AggregateError: Error: ECONNREFUSED: connect ECONNREFUSED ::1:5432; Error: timed out",
+    );
+  });
+});
+
+describe("mapSettled", () => {
+  it("returns one settled result per item, in input order", async () => {
+    const results = await mapSettled([1, 2, 3], 2, async (n) => n * 10);
+
+    assert.deepEqual(results, [
+      { status: "fulfilled", value: 10 },
+      { status: "fulfilled", value: 20 },
+      { status: "fulfilled", value: 30 },
+    ]);
+  });
+
+  it("keeps the input order when later items finish first", async () => {
+    const results = await mapSettled([1, 2, 3, 4], 4, async (n) => {
+      for (let i = 0; i < 5 - n; i++) await Promise.resolve(); // item 1 is slowest
+      return n;
+    });
+
+    assert.deepEqual(
+      results.map((r) => r.status === "fulfilled" && r.value),
+      [1, 2, 3, 4],
+    );
+  });
+
+  it("runs at most `limit` calls at once, and does reach the limit", async () => {
+    let inFlight = 0;
+    let peak = 0;
+
+    await mapSettled(Array.from({ length: 20 }, (_, i) => i), 4, async () => {
+      peak = Math.max(peak, ++inFlight);
+      await Promise.resolve();
+      inFlight--;
+    });
+
+    assert.equal(peak, 4);
+  });
+
+  it("reports a rejection in place and carries on with the rest", async () => {
+    const boom = new Error("boom");
+
+    const results = await mapSettled(["a", "b", "c"], 2, async (item) => {
+      if (item === "b") throw boom;
+      return item;
+    });
+
+    assert.deepEqual(results[0], { status: "fulfilled", value: "a" });
+    assert.deepEqual(results[1], { status: "rejected", reason: boom });
+    assert.deepEqual(results[2], { status: "fulfilled", value: "c" });
+  });
+
+  it("passes the index along, and copes with empty input or a limit above the item count", async () => {
+    assert.deepEqual(await mapSettled([], 5, async () => 1), []);
+
+    const results = await mapSettled(["x", "y"], 50, async (item, index) => `${item}${index}`);
+    assert.deepEqual(
+      results.map((r) => r.status === "fulfilled" && r.value),
+      ["x0", "y1"],
     );
   });
 });

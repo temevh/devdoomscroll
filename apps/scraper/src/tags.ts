@@ -100,6 +100,13 @@ export function normalizeTags(raw: string[]): string[] {
   return [...tags];
 }
 
+/**
+ * The tag for Hacker News stories that no canonical tag fits. It is a row in the `tags`
+ * table. It is deliberately not in CANONICAL: normalizeTags strips punctuation, so it
+ * would turn "not-tagged" into "nottagged", and no source's own tags should produce it.
+ */
+export const NOT_TAGGED = "not-tagged";
+
 // Inference from free text, for sources whose posts carry no tags of their own.
 
 // Characters that can sit inside a name ("Node.js", "C#", "C++"); anything else separates words.
