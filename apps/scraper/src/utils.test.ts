@@ -31,7 +31,18 @@ describe("normalizeTags", () => {
   });
 
   it("drops tags that are neither canonical nor aliased", () => {
-    assert.deepEqual(normalizeTags(["beginners", "tutorial", "python", "c#"]), ["python"]);
+    assert.deepEqual(normalizeTags(["beginners", "tutorial", "python", "c++"]), ["python"]);
+  });
+
+  // Stack Overflow's tag is literally "c#", which used to be reduced to "c" and dropped.
+  it("keeps c# as its own csharp tag, however it is spelled", () => {
+    assert.deepEqual(normalizeTags(["c#"]), ["csharp"]);
+    assert.deepEqual(normalizeTags(["C#", "csharp", "CSharp"]), ["csharp"]);
+    assert.deepEqual(normalizeTags(["c#", "dotnet", "aspnet"]), ["csharp", "dotnet"]);
+  });
+
+  it("does not mistake C or C++ for C#", () => {
+    assert.deepEqual(normalizeTags(["c", "c++", "objective-c"]), []);
   });
 
   it("returns each canonical tag once, even when aliases collapse into it", () => {
@@ -116,7 +127,14 @@ describe("inferTags", () => {
 
   it("finds nothing in titles about other topics", () => {
     assert.deepEqual(inferTags("The history of salt"), []);
-    assert.deepEqual(inferTags("C++ and C#"), []);
+    assert.deepEqual(inferTags("C++ and Fortran"), []);
+  });
+
+  it("recognises C# but not C or C++", () => {
+    assert.deepEqual(inferTags("C# 14 released"), ["csharp"]);
+    assert.deepEqual(inferTags("Why (C#) and C++ differ"), ["csharp"]);
+    assert.deepEqual(inferTags("A C# tip. C#, F# and C"), ["csharp"]);
+    assert.deepEqual(inferTags("Learning C and C++"), []);
   });
 
   it("returns an empty list for empty or blank titles", () => {

@@ -7,6 +7,7 @@ const CANONICAL = [
   "aws",
   "career",
   "cloud",
+  "csharp",
   "css",
   "database",
   "devops",
@@ -51,7 +52,6 @@ const ALIASES: Record<string, (typeof CANONICAL)[number]> = {
   nuxt: "vue",
   nodejs: "node",
   golang: "go",
-  csharp: "dotnet",
   aspnet: "dotnet",
   k8s: "kubernetes",
   ml: "machinelearning",
@@ -83,8 +83,15 @@ const canonical = new Set<string>(CANONICAL);
 // returns Object.prototype.constructor (a function), not undefined.
 const aliases = new Map<string, string>(Object.entries(ALIASES));
 
-/** "Node.js" -> "nodejs": lowercase letters and digits only. */
-const toKey = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]/g, "");
+/**
+ * "Node.js" -> "nodejs": lowercase letters and digits only. "C#" is spelled out first
+ * ("csharp"), because stripping the symbol would leave "c", which is also C and C++.
+ */
+const toKey = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/\bc#/g, "csharp")
+    .replace(/[^a-z0-9]/g, "");
 
 /** The canonical tag a key stands for, if any. */
 const resolve = (key: string): string | undefined =>
