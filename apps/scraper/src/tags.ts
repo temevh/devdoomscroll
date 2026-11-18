@@ -1,6 +1,6 @@
 // The tags posts can have, shared by every source. Anything a source sends
 // that isn't listed here (or aliased to it) is dropped.
-const CANONICAL = [
+export const CANONICAL = [
   "ai",
   "android",
   "angular",

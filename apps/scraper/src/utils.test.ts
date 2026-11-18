@@ -4,9 +4,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { describeError } from "./logger.ts";
-import { inferTags, normalizeTags } from "./tags.ts";
+import { CANONICAL, inferTags, normalizeTags } from "./tags.ts";
 import { medianMs } from "./testing.ts";
 import { mapSettled } from "./utils/concurrency.ts";
+import {
+  GITHUB_TOPICS,
+  SKIPPED_TAGS,
+  isOrganic,
+  repoTags,
+  searchQuery,
+} from "./utils/github.ts";
 import { toPreview, toText } from "./utils/text.ts";
 
 describe("normalizeTags", () => {
@@ -279,6 +286,128 @@ describe("toPreview", () => {
   });
 });
 
+describe("GITHUB_TOPICS", () => {
+  it("covers every canonical tag, or says why it is skipped", () => {
+    const queried = GITHUB_TOPICS.map((t) => t.tag);
+
+    assert.deepEqual([...queried, ...SKIPPED_TAGS].sort(), [...CANONICAL].sort());
+    assert.deepEqual(SKIPPED_TAGS, ["career", "opensource"]);
+    assert.equal(queried.length, 38);
+  });
+
+  // The search finds repos by their GitHub topic; the topic has to mean the tag it stands for,
+  // or the repos found would be filed under the wrong name.
+  it("uses a topic that normalizes back to its own tag", () => {
+    for (const { tag, topic } of GITHUB_TOPICS) {
+      assert.deepEqual(normalizeTags([topic]), [tag], `topic "${topic}" for tag "${tag}"`);
+    }
+  });
+
+  it("spells the topics GitHub spells differently from our tags", () => {
+    const topicOf = (tag: string) => GITHUB_TOPICS.find((t) => t.tag === tag)?.topic;
+
+    assert.equal(topicOf("go"), "golang");
+    assert.equal(topicOf("machinelearning"), "machine-learning");
+    assert.equal(topicOf("node"), "nodejs");
+    assert.equal(topicOf("rust"), "rust");
+  });
+
+  it("has no duplicate topics", () => {
+    const topics = GITHUB_TOPICS.map((t) => t.topic);
+    assert.equal(new Set(topics).size, topics.length);
+  });
+});
+
+describe("searchQuery", () => {
+  const NOW = new Date("2026-11-18T10:00:00Z");
+
+  it("asks for popular, non-fork, non-archived repos created in the last 7 days", () => {
+    assert.equal(
+      searchQuery("rust", NOW),
+      "topic:rust created:>=2026-11-11 stars:>=20 forks:>=3 fork:false archived:false",
+    );
+  });
+
+  it("counts the 7 days back in UTC, whatever the local offset of `now`", () => {
+    // 00:30 on the 18th in Helsinki is still the 17th in UTC
+    assert.match(searchQuery("rust", new Date("2026-11-18T00:30:00+02:00")), /created:>=2026-11-10 /);
+  });
+
+  it("crosses month and year boundaries", () => {
+    assert.match(searchQuery("rust", new Date("2027-01-03T12:00:00Z")), /created:>=2026-12-27 /);
+  });
+
+  it("keeps a hyphenated topic as it is", () => {
+    assert.match(searchQuery("machine-learning", NOW), /^topic:machine-learning /);
+  });
+});
+
+describe("isOrganic", () => {
+  const repo = (stargazers_count: number, forks_count: number) => ({ stargazers_count, forks_count });
+
+  it("accepts a repo whose forks are a normal share of its stars", () => {
+    assert.equal(isOrganic(repo(3044, 245)), true); // ~0.08
+    assert.equal(isOrganic(repo(262, 18)), true); // ~0.07
+    assert.equal(isOrganic(repo(54, 6)), true); // ~0.11
+  });
+
+  // Topic-stuffed repos seen in the python topic: hundreds of stars, almost no forks.
+  it("rejects many stars with next to no forks", () => {
+    assert.equal(isOrganic(repo(363, 0)), false);
+    assert.equal(isOrganic(repo(363, 1)), false);
+    assert.equal(isOrganic(repo(132, 0)), false);
+  });
+
+  it("rejects a repo with more forks than a real audience explains", () => {
+    assert.equal(isOrganic(repo(100, 82)), false);
+    assert.equal(isOrganic(repo(100, 120)), false);
+  });
+
+  it("includes both ends of the 0.02 to 0.5 band", () => {
+    assert.equal(isOrganic(repo(100, 2)), true);
+    assert.equal(isOrganic(repo(100, 50)), true);
+    assert.equal(isOrganic(repo(100, 1)), false);
+    assert.equal(isOrganic(repo(100, 51)), false);
+  });
+
+  it("rejects a repo with no stars instead of dividing by zero", () => {
+    assert.equal(isOrganic(repo(0, 0)), false);
+    assert.equal(isOrganic(repo(0, 5)), false);
+  });
+});
+
+describe("repoTags", () => {
+  it("maps the topics and the language to canonical tags", () => {
+    assert.deepEqual(
+      repoTags({ topics: ["machine-learning", "pytorch", "python"], language: "Python" }, "python"),
+      ["machinelearning", "python"],
+    );
+  });
+
+  it("turns the language C# into csharp, and drops languages that are not tags", () => {
+    assert.deepEqual(repoTags({ topics: [], language: "C#" }, "dotnet"), ["csharp", "dotnet"]);
+    assert.deepEqual(repoTags({ topics: ["rust"], language: "Jupyter Notebook" }, "rust"), ["rust"]);
+    assert.deepEqual(repoTags({ topics: ["rust"], language: "C++" }, "rust"), ["rust"]);
+  });
+
+  it("always includes the tag the repo was found under", () => {
+    assert.deepEqual(repoTags({ topics: ["rust-lang"], language: null }, "rust"), ["rust"]);
+    assert.deepEqual(repoTags({ topics: [], language: undefined }, "docker"), ["docker"]);
+  });
+
+  it("lists each tag once, in the order topics, language, then the search tag", () => {
+    assert.deepEqual(
+      repoTags({ topics: ["typescript", "react", "ts", "reactjs"], language: "TypeScript" }, "react"),
+      ["typescript", "react"],
+    );
+    assert.deepEqual(repoTags({ topics: ["docker"], language: "Go" }, "kubernetes"), [
+      "docker",
+      "go",
+      "kubernetes",
+    ]);
+  });
+});
+
 // Timing checks. These guard against an order-of-magnitude slowdown (a regex rebuilt on
 // every call, accidental quadratic work), not for benchmarking. Each budget is roughly
 // 10x the median measured on a development machine, so a slow or busy CI runner is
@@ -291,6 +420,8 @@ describe("performance (loose budgets)", () => {
     inferTagsHugeTitle: 75, // measured ~6 ms
     normalizeTagsManyLists: 100, // measured ~9 ms
     toPreviewLargeHtml: 125, // measured ~10 ms
+    isOrganicManyRepos: 15, // measured ~1.5 ms
+    repoTagsManyRepos: 130, // measured ~13 ms
   };
 
   const within = (label: string, ms: number, budget: number) =>
@@ -361,5 +492,34 @@ describe("performance (loose budgets)", () => {
     const ms = medianMs(() => toPreview(html), 3);
 
     within("toPreview x 100 KB HTML", ms, BUDGET_MS.toPreviewLargeHtml);
+  });
+
+  it("judges 200,000 repos quickly", () => {
+    const repos = Array.from({ length: 200_000 }, (_, i) => ({
+      stargazers_count: 20 + (i % 500),
+      forks_count: i % 40,
+    }));
+
+    const ms = medianMs(() => {
+      for (const repo of repos) isOrganic(repo);
+    });
+
+    within("isOrganic x 200,000 repos", ms, BUDGET_MS.isOrganicManyRepos);
+  });
+
+  // A repo can list up to 20 topics on GitHub.
+  it("derives the tags of 5,000 repos quickly", () => {
+    const topics = [
+      "rust", "cli", "machine-learning", "python", "docker", "kubernetes", "awesome", "tool",
+      "self-hosted", "react", "typescript", "nodejs", "api", "llm", "devops", "security",
+      "golang", "linux", "tutorial", "web",
+    ];
+    const repo = { topics, language: "TypeScript" };
+
+    const ms = medianMs(() => {
+      for (let i = 0; i < 5_000; i++) repoTags(repo, "rust");
+    });
+
+    within("repoTags x 5,000 repos", ms, BUDGET_MS.repoTagsManyRepos);
   });
 });
