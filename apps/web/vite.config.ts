@@ -14,9 +14,10 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // /api/posts -> http://localhost:8080/posts (avoids CORS in dev)
+      // /api/posts -> http://localhost:8080/posts (avoids CORS in dev). The root `npm run dev`
+      // script sets API_PROXY_TARGET because it runs the API on another port.
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

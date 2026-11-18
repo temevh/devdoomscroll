@@ -24,8 +24,33 @@ export function mockFetch(...replies: Reply[]) {
       return next;
     },
   );
+  return recorded(fetchMock);
+}
+
+/**
+ * Replaces global fetch with a function that answers by URL, so a test does not depend on
+ * the order requests are made in (needed when requests run concurrently). The handler may
+ * be async, which lets a test hold requests in flight; return an Error to fail one like a
+ * network error.
+ */
+export function mockFetchBy(handler: (url: URL) => Reply | Promise<Reply>) {
+  const fetchMock = mock.method(
+    globalThis,
+    "fetch",
+    async (input: string | URL | Request, _init?: RequestInit) => {
+      const reply = await handler(new URL(String(input)));
+      if (reply instanceof Error) throw reply;
+      return reply;
+    },
+  );
+  return recorded(fetchMock);
+}
+
+function recorded(fetchMock: {
+  mock: { calls: Array<{ arguments: [string | URL | Request, RequestInit?] }> };
+}) {
   return {
-    /** Every request made so far, in order. */
+    /** Every request made so far, in the order fetch was called. */
     get requests() {
       return fetchMock.mock.calls.map((c) => ({
         url: new URL(String(c.arguments[0])),
@@ -79,4 +104,21 @@ export async function driveTimers<T>(promise: Promise<T>, stepMs = 1_000): Promi
     mock.timers.tick(stepMs);
   }
   return result;
+}
+
+/**
+ * Median wall-clock time of `fn` in milliseconds over `runs` timed runs, after one
+ * untimed warm-up call so V8 has optimised it. The median means a single noisy run
+ * (GC pause, busy CI machine) can't fail a timing test on its own.
+ */
+export function medianMs(fn: () => void, runs = 5): number {
+  fn();
+  const times: number[] = [];
+  for (let i = 0; i < runs; i++) {
+    const start = performance.now();
+    fn();
+    times.push(performance.now() - start);
+  }
+  times.sort((a, b) => a - b);
+  return times[Math.floor(times.length / 2)] ?? 0;
 }
