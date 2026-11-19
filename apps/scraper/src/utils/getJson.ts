@@ -4,7 +4,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 /** GET with retries on 429, 5xx and network errors: waits 2s, 4s, 8s (or Retry-After). */
 export async function getJson(
   url: string,
-  HEADERS: { accept: string; "user-agent": string },
+  HEADERS: Record<string, string>,
   MAX_ATTEMPTS: number,
 ): Promise<unknown> {
   for (let attempt = 1; ; attempt++) {

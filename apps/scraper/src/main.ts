@@ -9,6 +9,7 @@ import {
 } from "./db.ts";
 import {
   fetchDevto,
+  fetchGithub,
   fetchHackernews,
   fetchStackoverflow,
 } from "./sources/index.ts";
@@ -23,6 +24,8 @@ const env = z
         "must be a postgresql:// connection string (Supabase: Connect > Session pooler)",
     }),
     TICK_SECONDS: z.coerce.number().int().positive().default(60),
+    // Optional: raises GitHub's search limit from 10 to 30 requests a minute.
+    GITHUB_TOKEN: z.string().optional(),
   })
   .parse(process.env);
 
@@ -36,6 +39,7 @@ const SOURCES: Record<string, (since: Date | null) => Promise<Post[]>> = {
   devto: fetchDevto,
   stackoverflow: fetchStackoverflow,
   hackernews: fetchHackernews, // ignores `since`, see the adapter
+  github: () => fetchGithub({ token: env.GITHUB_TOKEN }), // ignores `since` too
 };
 
 async function tick() {

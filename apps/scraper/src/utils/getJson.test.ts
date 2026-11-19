@@ -38,6 +38,15 @@ describe("getJson", () => {
     assert.ok(request?.init.signal instanceof AbortSignal);
   });
 
+  // GitHub needs an authorization header on top of accept and user-agent.
+  it("sends extra headers, such as authorization", async () => {
+    const fetch = mockFetch(json({}));
+
+    await getJson(URL, { ...HEADERS, authorization: "Bearer token" }, 3);
+
+    assert.deepEqual(fetch.requests[0]?.init.headers, { ...HEADERS, authorization: "Bearer token" });
+  });
+
   it("does not retry client errors other than 429", async () => {
     const fetch = mockFetch(new Response("nope", { status: 404 }));
 
