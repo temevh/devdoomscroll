@@ -275,6 +275,109 @@ describe("fetchGithub", () => {
     assert.ok(logs.entries.some((e) => e.level === "warn" && e.msg.includes("incomplete")));
   });
 
+  // A run takes minutes, so it reports what it is about to do, each search as it finishes,
+  // and how it ended.
+  describe("progress logging", () => {
+    const python = GITHUB_TOPICS.findIndex((t) => t.topic === "python") + 1;
+    const searched = () => logs.info.filter((e) => e.msg === "github: searched");
+
+    it("says how many searches it will make and how long the pause between them is", async () => {
+      mockFetchBy(fakeGithub());
+
+      await run();
+
+      const [start] = logs.info;
+      assert.equal(start?.msg, "github: starting");
+      assert.equal(start?.searches, TOPIC_COUNT);
+      assert.equal(start?.spacingMs, 6_500);
+      assert.equal(start?.authenticated, false);
+      assert.equal(start?.estimatedSeconds, Math.round(((TOPIC_COUNT - 1) * 6_500) / 1_000));
+    });
+
+    it("reports the shorter pause, and a shorter estimate, when there is a token", async () => {
+      mockFetchBy(fakeGithub());
+
+      await run({ token: "ghp_secret" });
+
+      const [start] = logs.info;
+      assert.equal(start?.spacingMs, 2_200);
+      assert.equal(start?.authenticated, true);
+      assert.equal(start?.estimatedSeconds, Math.round(((TOPIC_COUNT - 1) * 2_200) / 1_000));
+      assert.ok(!JSON.stringify(logs.info).includes("ghp_secret"), "the token is never logged");
+    });
+
+    it("logs every search as it finishes, with its position and what it found", async () => {
+      const farmed = repo(2, { stargazers_count: 363, forks_count: 0 });
+      mockFetchBy(fakeGithub({ python: [repo(1, { topics: ["python"] }), farmed] }));
+
+      await run();
+
+      const lines = searched();
+      assert.deepEqual(
+        lines.map((l) => [l.search, l.of]),
+        GITHUB_TOPICS.map((_, i) => [i + 1, TOPIC_COUNT]),
+      );
+      assert.deepEqual(
+        lines.map((l) => l.topic),
+        GITHUB_TOPICS.map((t) => t.topic),
+      );
+      const line = lines[python - 1];
+      assert.equal(line?.hits, 2);
+      assert.equal(line?.kept, 1, "the star-farmed repo is not counted as kept");
+      assert.equal(typeof line?.ms, "number");
+    });
+
+    it("keeps a running count of distinct repos, so a repo under two topics counts once", async () => {
+      const shared = repo(1, { topics: ["python", "rust"], language: "Python" });
+      mockFetchBy(fakeGithub({ python: [shared], rust: [shared] }));
+
+      await run();
+
+      const counts = searched().map((l) => l.repos);
+      assert.equal(counts.at(-1), 1);
+      assert.ok(
+        counts.every((n, i) => i === 0 || (n as number) >= (counts[i - 1] as number)),
+        "the count never goes down",
+      );
+      assert.equal(searched().filter((l) => l.kept === 1).length, 2, "both searches found it");
+    });
+
+    it("warns about a failed search at once, naming the topic and the error", async () => {
+      mockFetchBy(fakeGithub({}, { docker: 403 }));
+
+      await run();
+
+      const failed = logs.entries.filter((e) => e.msg === "github: search failed");
+      assert.equal(failed.length, 1);
+      assert.equal(failed[0]?.level, "warn");
+      assert.equal(failed[0]?.topic, "docker");
+      assert.equal(failed[0]?.of, TOPIC_COUNT);
+      assert.match(String(failed[0]?.error), /403/);
+      assert.equal(searched().length, TOPIC_COUNT - 1, "a failed search is not reported as done");
+    });
+
+    it("ends with a summary of the run", async () => {
+      mockFetchBy(fakeGithub({ rust: [repo(1)] }, { docker: 403 }));
+
+      await run();
+
+      const done = logs.info.at(-1);
+      assert.equal(done?.msg, "github: finished");
+      assert.equal(done?.searches, TOPIC_COUNT);
+      assert.equal(done?.failed, 1);
+      assert.equal(done?.repos, 1);
+      assert.equal(typeof done?.ms, "number");
+    });
+
+    it("writes no summary when every search failed, since the scrape fails instead", async () => {
+      mockFetchBy(() => new Response("", { status: 403 }));
+
+      await assert.rejects(run(), /all \d+ searches failed/);
+
+      assert.ok(!logs.info.some((e) => e.msg === "github: finished"));
+    });
+  });
+
   describe("when searches fail", () => {
     it("keeps the repos of the other topics and logs how many searches failed", async () => {
       mockFetchBy(fakeGithub({ rust: [repo(1)], python: [repo(2, { topics: ["python"] })] }, { docker: 403 }));

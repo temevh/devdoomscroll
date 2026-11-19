@@ -76,15 +76,24 @@ export function restoreAll() {
   syncBuiltinESMExports();
 }
 
+type LogEntry = { level: string; msg: string; [field: string]: unknown };
+
 /**
- * Silences log.warn/log.error output (it goes to console.error) and returns
- * the logged entries, parsed, so tests can assert on them.
+ * Silences the log output and returns the logged entries, parsed, so tests can
+ * assert on them. `entries` holds log.warn and log.error (console.error),
+ * `info` holds log.info and log.debug (console.log).
  */
 export function silenceLogs() {
-  const spy = mock.method(console, "error", () => {});
+  const errors = mock.method(console, "error", () => {});
+  const out = mock.method(console, "log", () => {});
+  const parse = (spy: typeof errors): LogEntry[] =>
+    spy.mock.calls.map((c) => JSON.parse(String(c.arguments[0])));
   return {
-    get entries(): Array<{ level: string; msg: string }> {
-      return spy.mock.calls.map((c) => JSON.parse(String(c.arguments[0])));
+    get entries() {
+      return parse(errors);
+    },
+    get info() {
+      return parse(out);
     },
   };
 }
