@@ -22,11 +22,11 @@ defineEmits<{ toggle: [id: string]; clear: [] }>()
         v-for="source in sources"
         :key="source.id"
         type="button"
-        class="inline-flex h-8 cursor-pointer items-center gap-2 rounded-full py-0 pr-3.5 pl-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        class="inline-flex h-8 cursor-pointer items-center gap-2 rounded-full border py-0 pr-3.5 pl-2.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         :class="
           selected.includes(source.id)
-            ? 'bg-accent text-canvas hover:bg-accent/85'
-            : 'border border-line text-ink hover:border-accent hover:text-accent'
+            ? 'border-accent bg-accent/15 text-accent hover:bg-accent/25'
+            : 'border-line text-ink hover:border-accent hover:text-accent'
         "
         :aria-pressed="selected.includes(source.id)"
         @click="$emit('toggle', source.id)"
