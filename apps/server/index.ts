@@ -33,16 +33,20 @@ server.get("/ping", async () => {
   return "pong\n";
 });
 
+// "a, b,,c" -> ["a", "b", "c"]; absent -> []
+const commaList = z
+  .string()
+  .optional()
+  .transform((v) =>
+    (v ?? "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
+  );
+
 const listPostsQuery = z.object({
-  tags: z
-    .string()
-    .optional()
-    .transform((v) =>
-      (v ?? "")
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    ),
+  tags: commaList,
+  sources: commaList,
   limit: z.coerce.number().int().min(1).max(100).default(50),
   cursor: z.string().optional(),
 });
@@ -77,7 +81,7 @@ server.get("/posts", async (request, reply) => {
       `${issue?.path.join(".")}: ${issue?.message}`,
     );
   }
-  const { tags, limit, cursor } = parsed.data;
+  const { tags, sources, limit, cursor } = parsed.data;
 
   const after = cursor ? decodeCursor(cursor) : undefined;
   if (after === null)
@@ -117,6 +121,10 @@ server.get("/posts", async (request, reply) => {
     );
   }
 
+  if (sources.length > 0) {
+    query = query.where("p.source_id", "in", sources);
+  }
+
   if (after) {
     query = query.where(
       sql<boolean>`(p.published_at, p.id) < (${after.publishedAt}, ${after.id}::uuid)`,
@@ -152,6 +160,15 @@ server.get("/tags", async () => {
     .orderBy("name")
     .execute();
   return rows.map((r) => r.name);
+});
+
+server.get("/sources", async () => {
+  return db
+    .selectFrom("sources")
+    .select(["id", "name"])
+    .where("enabled", "=", true)
+    .orderBy("name")
+    .execute();
 });
 
 server.listen({ port, host: "0.0.0.0" }, (err) => {

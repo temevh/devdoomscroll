@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { sourceIcon } from '../../lib/sourceIcons.ts'
 
 const props = defineProps<{ id: string; name: string }>()
 
-const COLORS: Record<string, string> = {
-  devto: 'bg-ink text-canvas',
-  reddit: 'bg-[#ff7a59] text-canvas',
-  stackoverflow: 'bg-[#f4b23e] text-canvas',
-  hackernews: 'bg-[#8fb4ff] text-canvas',
-  lobsters: 'bg-[#f2a0a0] text-canvas',
-  github: 'bg-[#b79cff] text-canvas',
-}
-
-const color = computed(() => COLORS[props.id] ?? 'bg-line text-ink')
+const icon = computed(() => sourceIcon(props.id))
 </script>
 
 <template>
+  <svg
+    v-if="icon"
+    class="size-5 shrink-0"
+    viewBox="0 0 24 24"
+    :style="{ fill: icon.color }"
+    aria-hidden="true"
+  >
+    <path :d="icon.path" />
+  </svg>
+  <!-- No logo for this source yet: fall back to its first letter. -->
   <span
-    class="inline-flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[11px] font-bold"
-    :class="color"
+    v-else
+    class="inline-flex size-5 shrink-0 items-center justify-center rounded-[5px] bg-line text-[11px] font-bold text-ink"
     aria-hidden="true"
   >
     {{ name.charAt(0).toUpperCase() }}

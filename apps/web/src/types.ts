@@ -29,9 +29,11 @@ export interface Page<T> {
 export interface ListPostsParams {
   /** Returns posts having at least one of these tags. Omit for all tags. */
   tags?: string[]
+  /** Returns posts from these source ids (e.g. "devto"). Omit for all sources. */
+  sources?: string[]
   /** 1–100, server default 50 */
   limit?: number
-  /** nextCursor from a previous response (use the same tags) */
+  /** nextCursor from a previous response (use the same tags and sources) */
   cursor?: string
 }
 
