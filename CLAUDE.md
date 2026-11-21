@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 doom.dev ("devdoomscroll"): a feed of developer posts from dev.to, Stack Overflow and Hacker News, filterable by tag. Three independent apps under `apps/`, sharing one Supabase Postgres database. There are no npm workspaces; each app has its own `package.json` and `node_modules`.
 
 - `apps/scraper` (`@doom/worker`): long-running worker that pulls posts from sources into Postgres.
-- `apps/server` (`@doom/server`): Fastify read-only API (`GET /posts`, `GET /tags`, `GET /ping`) over the same DB. Deployed on Render.
+- `apps/server` (`@doom/server`): Fastify read-only API (`GET /posts`, `GET /tags`, `GET /sources`, `GET /ping`) over the same DB. Deployed on Render.
 - `apps/web` (`@doom/web`): Vue 3 + Vite + Tailwind 4 SPA. Deployed on Vercel.
 - `supabase/migrations`: the schema and source seed rows (Supabase CLI is a root devDependency).
 
@@ -55,9 +55,9 @@ Supabase: `npx supabase ...` from the root (`supabase/config.toml`, project_id `
 
 **Tags**: `apps/scraper/src/tags.ts` holds a closed `CANONICAL` list plus `ALIASES`. `normalizeTags()` drops every source tag not in the list, and posts left with no tags are skipped, except for Hacker News. HN sends no tags, so `inferTags(title)` tags what it can (it matches single words and neighbouring word pairs against the same names and aliases; `Go` and `Swift` count only when capitalised, and bare `node`, `web` and `github` never count) and stories no tag fits are filed under `not-tagged` (`NOT_TAGGED` in `tags.ts`, a row in the `tags` table) instead of being dropped, so every HN story has a tag. `NOT_TAGGED` is deliberately not in `CANONICAL`: `normalizeTags` strips punctuation and would turn it into `nottagged`. The web tag picker is fed by `GET /tags`, which reads the `tags` table. A canonical tag only shows up once a post has used it.
 
-**API** (`apps/server/index.ts`, single file): `GET /posts?tags=a,b&limit=&cursor=` returns posts that have at least one of the tags, newest first. Pagination is keyset on `(published_at, id)`, with an opaque base64url cursor and `nextCursor`. Errors are RFC 9457 `application/problem+json`. The contract is in `docs/api/openapi.yaml`.
+**API** (`apps/server/index.ts`, single file): `GET /posts?tags=a,b&sources=x,y&limit=&cursor=` returns posts that have at least one of the tags and come from one of the sources (each filter is skipped when omitted or empty), newest first. `GET /sources` returns the enabled sources as `[{id, name}]`, ordered by name. Pagination is keyset on `(published_at, id)`, with an opaque base64url cursor and `nextCursor`. Errors are RFC 9457 `application/problem+json`. The contract is in `docs/api/openapi.yaml`.
 
-**Web**: `src/api/client.ts` is a thin typed fetch wrapper (`ApiError`; array query values are serialized as `?tags=a,b`). `src/api/index.ts` exposes `api.posts.list` and `api.tags.list`. Followed tags are stored in `localStorage` (`doom.followedTags`) via `composables/useFollowedTags.ts`; there is no user account.
+**Web**: `src/api/client.ts` is a thin typed fetch wrapper (`ApiError`; array query values are serialized as `?tags=a,b`). `src/api/index.ts` exposes `api.posts.list`, `api.tags.list` and `api.sources.list`. Followed tags (`doom.followedTags`, `composables/useFollowedTags.ts`) and selected sources (`doom.selectedSources`, `composables/useSelectedSources.ts`) are stored in `localStorage` through the shared `composables/useSavedList.ts` (an editable draft plus a saved copy); there is no user account. `App.vue` has one "Save changes" button for both, and the feed reloads only when a saved list changes. An empty source selection means all sources, so a source id stored locally that the API no longer lists would filter the feed to nothing.
 
 ## Testing
 

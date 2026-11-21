@@ -14,6 +14,8 @@ tags:
     description: Operations related to posts
   - name: tags
     description: Operations related to tags
+  - name: sources
+    description: Operations related to sources
 
 paths:
   /posts:
@@ -23,7 +25,7 @@ paths:
       operationId: listPosts
       security: []
       summary: List Posts
-      description: Retrieve posts matching the selected tags, amount based on set limit
+      description: Retrieve posts matching the selected tags and sources, amount based on set limit
       parameters:
         - in: query
           name: tags
@@ -32,6 +34,19 @@ paths:
             Tags to filter by, comma-separated (e.g. python,ai).
             Returns posts that have at least one of the given tags.
             If omitted, posts from all tags are returned.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - in: query
+          name: sources
+          required: false
+          description: >
+            Source ids to filter by, comma-separated (e.g. devto,hackernews).
+            Returns posts from any of the given sources. If omitted, posts from
+            all sources are returned. Combines with tags: a post must match both.
           schema:
             type: array
             items:
@@ -52,13 +67,13 @@ paths:
           required: false
           description: >
             Opaque cursor from a previous response's nextCursor.
-            Omit to get the first page. Must be used with the same tags as the
-            request that produced it.
+            Omit to get the first page. Must be used with the same tags and
+            sources as the request that produced it.
           schema:
             type: string
       responses:
         "200":
-          description: Posts matching the given tags, newest first
+          description: Posts matching the given tags and sources, newest first
           content:
             application/json:
               schema:
@@ -98,6 +113,26 @@ paths:
                       examples: ["ai", "python", "cloud"]
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /sources:
+    get:
+      tags:
+        - sources
+      operationId: listSources
+      security: []
+      summary: Get all selectable sources
+      description: Return the enabled sources, ordered by name
+      responses:
+        "200":
+          description: Sources are returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Source"
         "500":
           $ref: "#/components/responses/InternalError"
 

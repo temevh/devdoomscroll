@@ -1,5 +1,5 @@
 import { get, type RequestOptions } from './client.ts'
-import type { ListPostsParams, Page, Post } from '../types.ts'
+import type { ListPostsParams, Page, Post, Source } from '../types.ts'
 
 export { ApiError } from './client.ts'
 export type * from '../types.ts'
@@ -15,5 +15,9 @@ export const api = {
   tags: {
     /** GET /tags — all selectable tag names */
     list: (options: CallOptions = {}) => get<string[]>('/tags', options),
+  },
+  sources: {
+    /** GET /sources — the enabled sources a user can pick from */
+    list: (options: CallOptions = {}) => get<Source[]>('/sources', options),
   },
 }
